@@ -11,15 +11,19 @@ workflows:
         APP_NAME: "Space"
     scripts:
       - name: Install dependencies
-        script: |
-          npm install
-          npm install -g @capacitor/cli
+        script: npm install
 
       - name: Build web app
         script: npm run build
 
-      - name: Capacitor sync
-        script: cap sync ios
+      - name: Copy web assets to iOS
+        script: |
+          mkdir -p ios/App/App/public
+          cp -r dist/* ios/App/App/public/
+          cp capacitor.config.json ios/App/App/capacitor.config.json 2>/dev/null || true
+
+      - name: Pod install
+        script: cd ios/App && pod install
 
       - name: Build iOS app (unsigned)
         script: |
