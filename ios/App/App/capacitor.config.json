@@ -1,0 +1,15 @@
+{
+	"appId": "com.shaurya.space",
+	"appName": "Space",
+	"webDir": "dist",
+	"ios": {
+		"contentInset": "always",
+		"deploymentTarget": "16.0"
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 0
+		}
+	},
+	"packageClassList": []
+}
