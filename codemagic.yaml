@@ -11,13 +11,15 @@ workflows:
         APP_NAME: "Space"
     scripts:
       - name: Install dependencies
-        script: npm install
+        script: |
+          npm install
+          npm install -g @capacitor/cli
 
       - name: Build web app
         script: npm run build
 
       - name: Capacitor sync
-        script: ./node_modules/.bin/cap sync ios
+        script: cap sync ios
 
       - name: Build iOS app (unsigned)
         script: |
