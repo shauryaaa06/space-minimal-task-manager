@@ -1,0 +1,44 @@
+workflows:
+  ios-release:
+    name: Space iOS Release
+    max_build_duration: 60
+    environment:
+      node: 20.20.2
+      xcode: latest
+      cocoapods: default
+      vars:
+        BUNDLE_ID: "com.shaurya.space"
+        APP_NAME: "Space"
+    scripts:
+      - name: Install dependencies
+        script: npm install
+
+      - name: Build web app
+        script: npm run build
+
+      - name: Capacitor sync
+        script: npx cap sync ios
+
+      - name: Set up code signing
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Build iOS app
+        script: |
+          xcode-project build-ipa \
+            --workspace ios/App/App.xcworkspace \
+            --scheme App
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
