@@ -20,7 +20,36 @@ workflows:
         script: |
           mkdir -p ios/App/App/public
           cp -r dist/* ios/App/App/public/
-          cp capacitor.config.json ios/App/App/capacitor.config.json 2>/dev/null || true
+
+          # Always (re)create the two config files the Xcode project requires.
+          # These get excluded by .gitignore, so we write them here to guarantee
+          # they exist in the build, no matter what was cloned.
+          cat > ios/App/App/capacitor.config.json <<'EOF'
+          {
+            "appId": "com.shaurya.space",
+            "appName": "Space",
+            "webDir": "dist",
+            "ios": {
+              "contentInset": "always",
+              "deploymentTarget": "16.0"
+            },
+            "plugins": {
+              "SplashScreen": {
+                "launchShowDuration": 0
+              }
+            }
+          }
+          EOF
+
+          cat > ios/App/App/config.xml <<'EOF'
+          <?xml version='1.0' encoding='utf-8'?>
+          <widget version="1.0.0" xmlns="http://www.w3.org/ns/widgets">
+              <access origin="*" />
+          </widget>
+          EOF
+
+          echo "Confirmed config files exist:"
+          ls -la ios/App/App/config.xml ios/App/App/capacitor.config.json
 
       - name: Pod install
         script: cd ios/App && pod install
