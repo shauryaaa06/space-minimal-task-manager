@@ -16,7 +16,12 @@ export default function HomePage() {
   const [showSearch, setShowSearch] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  const { user, getUserTasks, getUpcomingTasks, groups, notifications, getUnreadNotificationsCount, markAllNotificationsRead } = useStore();
+  const { user, getUserTasks, getUpcomingTasks, groups, notifications, getUnreadNotificationsCount, markAllNotificationsRead, setActiveTab, setActiveGroupId } = useStore();
+
+  const openGroup = (groupId: string) => {
+    setActiveGroupId(groupId);
+    setActiveTab('groups');
+  };
 
   const allTasks = getUserTasks();
   const todayStr = new Date().toISOString().split('T')[0];
@@ -231,7 +236,13 @@ export default function HomePage() {
             <div className="mb-6">
               <div className="flex items-center justify-between px-5 mb-3">
                 <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>Groups</h2>
-                <button className="text-sm font-medium" style={{ color: 'var(--accent-500)' }}>See all</button>
+                <button
+                  onClick={() => setActiveTab('groups')}
+                  className="text-sm font-medium"
+                  style={{ color: 'var(--accent-500)' }}
+                >
+                  See all
+                </button>
               </div>
               <div className="flex gap-3 px-5 overflow-x-auto no-scrollbar pb-1">
                 {activeGroups.slice(0, 8).map((group, i) => (
@@ -241,7 +252,7 @@ export default function HomePage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
                   >
-                    <GroupCard group={group} compact />
+                    <GroupCard group={group} compact onPress={g => openGroup(g.id)} />
                   </motion.div>
                 ))}
               </div>

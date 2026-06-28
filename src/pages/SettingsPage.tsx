@@ -11,7 +11,7 @@ import Modal from '../components/ui/Modal';
 import { applyTheme, getThemeDisplayName, getThemeColor } from '../utils';
 import type { ThemePreset, ColorScheme } from '../types';
 
-type SettingsSection = 'main' | 'appearance' | 'account' | 'notifications' | 'focus' | 'data' | 'about' | 'deleted';
+type SettingsSection = 'main' | 'appearance' | 'account' | 'notifications' | 'focus' | 'data' | 'about' | 'deleted' | 'cleanup' | 'privacy';
 
 export default function SettingsPage() {
   const [section, setSection] = useState<SettingsSection>('main');
@@ -208,6 +208,107 @@ export default function SettingsPage() {
     );
   }
 
+  if (section === 'cleanup') {
+    const dayOptions = [0, 7, 14, 30];
+    const cleanupRows: { key: 'autoDeleteCompletedDays' | 'autoEmptyTrashDays'; label: string; hint: string }[] = [
+      { key: 'autoDeleteCompletedDays', label: 'Delete Completed Tasks', hint: 'Completed tasks are moved to Recently Deleted after this long.' },
+      { key: 'autoEmptyTrashDays', label: 'Empty Trash', hint: 'Items in Recently Deleted are permanently removed after this long.' },
+    ];
+    return (
+      <div style={{ paddingBottom: 'calc(80px + 24px)' }}>
+        <div className="px-5 pt-12 pb-4 flex items-center gap-3">
+          <button onClick={() => setSection('main')} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--bg-secondary)' }}>
+            <ChevronRight className="w-5 h-5 rotate-180" style={{ color: 'var(--text-secondary)' }} />
+          </button>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Auto-Cleanup</h1>
+        </div>
+
+        {cleanupRows.map(({ key, label, hint }) => {
+          const current = settings?.[key] ?? 0;
+          return (
+            <div key={key} className="px-5 mb-5">
+              <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>
+                {label.toUpperCase()}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {dayOptions.map(n => (
+                  <button key={n} onClick={() => updateSettings({ [key]: n })}
+                    className="px-4 py-2 rounded-xl text-sm font-medium transition-all"
+                    style={{
+                      background: current === n ? 'var(--accent-500)' : 'var(--bg-secondary)',
+                      color: current === n ? 'white' : 'var(--text-secondary)',
+                      border: `1px solid ${current === n ? 'var(--accent-500)' : 'var(--border-color)'}`,
+                    }}>
+                    {n === 0 ? 'Off' : `${n} days`}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>{hint}</p>
+            </div>
+          );
+        })}
+
+        <p className="px-5 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+          Cleanup runs each time you open the app. Tasks deleted this way can still be restored from Recently Deleted until the trash is emptied.
+        </p>
+      </div>
+    );
+  }
+
+  if (section === 'privacy') {
+    return (
+      <div style={{ paddingBottom: 'calc(80px + 24px)' }}>
+        <div className="px-5 pt-12 pb-4 flex items-center gap-3">
+          <button onClick={() => setSection('main')} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--bg-secondary)' }}>
+            <ChevronRight className="w-5 h-5 rotate-180" style={{ color: 'var(--text-secondary)' }} />
+          </button>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Privacy Policy</h1>
+        </div>
+
+        <div className="px-5 space-y-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <p style={{ color: 'var(--text-tertiary)' }} className="text-xs">Last updated: June 2026</p>
+
+          <p>Space is built to respect your privacy. In short: <strong style={{ color: 'var(--text-primary)' }}>your data stays on your device, and we don't collect it.</strong></p>
+
+          <div>
+            <p className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>What we store</p>
+            <p>Your tasks, groups, calendar events, focus sessions, and settings are saved locally on your device only. Space does not run any server that receives or stores this information.</p>
+          </div>
+
+          <div>
+            <p className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>What we collect</p>
+            <p>Nothing. Space contains no analytics, no advertising, and no third-party tracking. We do not collect personal information, usage data, or your location.</p>
+          </div>
+
+          <div>
+            <p className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Accounts</p>
+            <p>If you create an account, your name, email, and password are stored only on your device to let you sign in. They are never transmitted to us or anyone else. You can delete your account and all its data at any time from Settings.</p>
+          </div>
+
+          <div>
+            <p className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Sharing</p>
+            <p>Because your data never leaves your device, it is never shared with us, advertisers, or any third party.</p>
+          </div>
+
+          <div>
+            <p className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Deleting your data</p>
+            <p>Deleting a task, emptying Recently Deleted, deleting your account, or uninstalling the app permanently removes the related data from your device.</p>
+          </div>
+
+          <div>
+            <p className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Children's privacy</p>
+            <p>Space does not knowingly collect any information from anyone, including children, because it does not collect information at all.</p>
+          </div>
+
+          <div>
+            <p className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Contact</p>
+            <p>Questions about this policy? Email <span style={{ color: 'var(--accent-500)' }}>support@spacetaskapp.com</span>.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (section === 'deleted') {
     return (
       <div style={{ paddingBottom: 'calc(80px + 24px)' }}>
@@ -322,6 +423,10 @@ export default function SettingsPage() {
           toggle toggled={settings?.showCompletedTasks !== false}
           onClick={() => updateSettings({ showCompletedTasks: !settings?.showCompletedTasks })} />
         <Divider />
+        <SettingRow label="Auto-Cleanup" icon={<Clock className="w-4 h-4" />}
+          value={settings?.autoDeleteCompletedDays || settings?.autoEmptyTrashDays ? 'On' : 'Off'}
+          onClick={() => setSection('cleanup')} />
+        <Divider />
         <SettingRow label="Recently Deleted" icon={<Trash2 className="w-4 h-4" />}
           value={`${deletedTasks.length} items`}
           onClick={() => setSection('deleted')} />
@@ -376,6 +481,9 @@ export default function SettingsPage() {
             Clear mind. Clear space.
           </p>
         </div>
+        <Divider />
+        <SettingRow label="Privacy Policy" icon={<Shield className="w-4 h-4" />}
+          onClick={() => setSection('privacy')} />
       </SectionContainer>
 
       {/* Account */}

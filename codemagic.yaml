@@ -61,10 +61,30 @@ workflows:
             -scheme App \
             -configuration Release \
             -sdk iphoneos \
+            -derivedDataPath build \
             IPHONEOS_DEPLOYMENT_TARGET=16.0 \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
 
+      - name: Package unsigned .ipa for sideloading
+        script: |
+          # Wrap the built .app into an unsigned .ipa. Sideloadly / AltStore
+          # re-sign this with the user's free Apple ID when installing, so it
+          # does not need to be signed here.
+          APP_PATH="build/Build/Products/Release-iphoneos/App.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "ERROR: $APP_PATH not found. Searching for the built .app:"
+            find build -name "*.app" -maxdepth 6 -print
+            exit 1
+          fi
+          rm -rf Payload Space.ipa
+          mkdir -p Payload
+          cp -r "$APP_PATH" Payload/
+          zip -r Space.ipa Payload >/dev/null
+          echo "Built unsigned IPA:"
+          ls -la Space.ipa
+
     artifacts:
+      - Space.ipa
       - /tmp/xcodebuild_logs/*.log

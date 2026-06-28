@@ -8,11 +8,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 function App() {
   const { user, onboardingComplete, isGuest } = useStore();
+  const runAutoCleanup = useStore(s => s.runAutoCleanup);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    // Clean up old completed/trashed tasks per the user's auto-delete settings.
+    runAutoCleanup();
+  }, [runAutoCleanup]);
 
   useEffect(() => {
     if (user?.settings) {

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useStore } from '../../store';
 import type { Group } from '../../types';
+import { COLLABORATION_ENABLED } from '../../config';
 
 interface GroupCardProps {
   group: Group;
@@ -69,7 +70,7 @@ export default function GroupCard({ group, compact, onPress, selected }: GroupCa
               {group.name}
             </p>
             <div className="flex items-center gap-2">
-              {group.isShared && (
+              {COLLABORATION_ENABLED && group.isShared && (
                 <div className="flex items-center gap-1 px-2 py-0.5 rounded-full"
                   style={{ background: `${group.color}15` }}>
                   <span className="text-xs font-medium" style={{ color: group.color }}>Shared</span>

@@ -36,21 +36,26 @@ export default function TaskCard({ task, onPress, showGroup = true, compact = fa
 
   return (
     <div ref={constraintsRef} className="relative overflow-hidden rounded-2xl" style={{ marginBottom: compact ? '8px' : '10px' }}>
-      {/* Swipe Backgrounds */}
-      <div className="absolute inset-0 flex">
-        <div className="flex-1 flex items-center px-6 rounded-2xl" style={{ background: '#22c55e' }}>
-          <Check className="w-5 h-5 text-white" />
-          <span className="text-white text-sm font-semibold ml-2">Complete</span>
-        </div>
-        <div className="flex-1" />
-      </div>
-      <div className="absolute inset-0 flex">
-        <div className="flex-1" />
-        <div className="flex-1 flex items-center justify-end px-6 rounded-2xl" style={{ background: '#ef4444' }}>
-          <span className="text-white text-sm font-semibold mr-2">Delete</span>
-          <Trash2 className="w-5 h-5 text-white" />
-        </div>
-      </div>
+      {/* Swipe Backgrounds — only shown while actively swiping so they don't
+          bleed through the card (e.g. when a completed card is semi-transparent) */}
+      {(isDragging || swipeX !== 0) && (
+        <>
+          <div className="absolute inset-0 flex">
+            <div className="flex-1 flex items-center px-6 rounded-2xl" style={{ background: '#22c55e' }}>
+              <Check className="w-5 h-5 text-white" />
+              <span className="text-white text-sm font-semibold ml-2">Complete</span>
+            </div>
+            <div className="flex-1" />
+          </div>
+          <div className="absolute inset-0 flex">
+            <div className="flex-1" />
+            <div className="flex-1 flex items-center justify-end px-6 rounded-2xl" style={{ background: '#ef4444' }}>
+              <span className="text-white text-sm font-semibold mr-2">Delete</span>
+              <Trash2 className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </>
+      )}
 
       <motion.div
         drag="x"

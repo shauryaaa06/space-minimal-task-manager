@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Users, Link, Lock, Archive, Trash2, Share2, ChevronRight, MoreHorizontal, X } from 'lucide-react';
 import { useStore } from '../store';
@@ -9,6 +9,7 @@ import TaskDetailModal from '../components/tasks/TaskDetailModal';
 import Modal from '../components/ui/Modal';
 import type { Group, Task } from '../types';
 import { GROUP_COLORS, GROUP_ICONS } from '../utils';
+import { COLLABORATION_ENABLED } from '../config';
 
 function GroupListItem({ group, index, onClick }: { group: Group; index: number; onClick: () => void }) {
   const tasks = useStore(s => s.tasks);
@@ -37,7 +38,7 @@ function GroupListItem({ group, index, onClick }: { group: Group; index: number;
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{group.name}</p>
-            {group.isShared && (
+            {COLLABORATION_ENABLED && group.isShared && (
               <Share2 className="w-3.5 h-3.5" style={{ color: group.color }} />
             )}
           </div>
@@ -47,7 +48,7 @@ function GroupListItem({ group, index, onClick }: { group: Group; index: number;
           </div>
         </div>
         <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
-          {completed}/{total} tasks · {group.isShared ? `${group.members?.length ?? 1} members` : 'Private'}
+          {completed}/{total} tasks · {COLLABORATION_ENABLED && group.isShared ? `${group.members?.length ?? 1} members` : 'Private'}
         </p>
         {total > 0 && (
           <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-tertiary)' }}>
@@ -77,8 +78,17 @@ export default function GroupsPage() {
   const [isShared, setIsShared] = useState(false);
   const [groupDesc, setGroupDesc] = useState('');
 
-  const { groups, addGroup, deleteGroup, archiveGroup, joinGroup, sendChatMessage, chatMessages, getTasksByGroup, activityFeed } = useStore();
+  const { groups, addGroup, deleteGroup, archiveGroup, joinGroup, sendChatMessage, chatMessages, getTasksByGroup, activityFeed, activeGroupId, setActiveGroupId } = useStore();
   const { showToast } = useToast();
+
+  // When a group is opened from another page (e.g. Home), show its detail view.
+  useEffect(() => {
+    if (activeGroupId) {
+      const group = groups.find(g => g.id === activeGroupId);
+      if (group) setSelectedGroup(group);
+      setActiveGroupId(null);
+    }
+  }, [activeGroupId, groups, setActiveGroupId]);
 
   const activeGroups = groups.filter(g => !g.archived);
   const archivedGroups = groups.filter(g => g.archived);
@@ -146,7 +156,7 @@ export default function GroupsPage() {
             <div>
               <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{selectedGroup.name}</h1>
               <div className="flex items-center gap-2 mt-0.5">
-                {selectedGroup.isShared ? (
+                {COLLABORATION_ENABLED && selectedGroup.isShared ? (
                   <div className="flex items-center gap-1">
                     <Users className="w-3.5 h-3.5" style={{ color: selectedGroup.color }} />
                     <span className="text-xs font-medium" style={{ color: selectedGroup.color }}>
@@ -171,7 +181,7 @@ export default function GroupsPage() {
           )}
 
           {/* Invite Code */}
-          {selectedGroup.isShared && selectedGroup.inviteCode && (
+          {COLLABORATION_ENABLED && selectedGroup.isShared && selectedGroup.inviteCode && (
             <div className="mt-3 flex items-center gap-2 p-3 rounded-xl"
               style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
               <Link className="w-4 h-4" style={{ color: selectedGroup.color }} />
@@ -189,22 +199,24 @@ export default function GroupsPage() {
           )}
         </div>
 
-        {/* Tabs */}
-        <div className="flex px-5 pt-3 gap-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-          {(['tasks', ...(selectedGroup.isShared ? ['chat', 'members', 'activity'] : [])] as typeof activeTab[]).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className="px-4 py-2 text-sm font-medium rounded-t-xl capitalize transition-all"
-              style={{
-                color: activeTab === tab ? selectedGroup.color : 'var(--text-tertiary)',
-                borderBottom: activeTab === tab ? `2px solid ${selectedGroup.color}` : '2px solid transparent',
-              }}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+        {/* Tabs — only shown for shared groups (chat / members / activity) */}
+        {COLLABORATION_ENABLED && selectedGroup.isShared && (
+          <div className="flex px-5 pt-3 gap-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+            {(['tasks', 'chat', 'members', 'activity'] as typeof activeTab[]).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className="px-4 py-2 text-sm font-medium rounded-t-xl capitalize transition-all"
+                style={{
+                  color: activeTab === tab ? selectedGroup.color : 'var(--text-tertiary)',
+                  borderBottom: activeTab === tab ? `2px solid ${selectedGroup.color}` : '2px solid transparent',
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto">
@@ -365,13 +377,15 @@ export default function GroupsPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Groups</h1>
           <div className="flex gap-2">
-            <button
-              onClick={() => setShowJoinGroup(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium"
-              style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
-            >
-              <Link className="w-4 h-4" /> Join
-            </button>
+            {COLLABORATION_ENABLED && (
+              <button
+                onClick={() => setShowJoinGroup(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
+              >
+                <Link className="w-4 h-4" /> Join
+              </button>
+            )}
             <button
               onClick={() => setShowCreateGroup(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-white"
@@ -470,19 +484,21 @@ export default function GroupsPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-2xl"
-            style={{ background: 'var(--bg-secondary)' }}>
-            <div>
-              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Collaborative Group</p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>Invite others to join</p>
+          {COLLABORATION_ENABLED && (
+            <div className="flex items-center justify-between p-4 rounded-2xl"
+              style={{ background: 'var(--bg-secondary)' }}>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Collaborative Group</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>Invite others to join</p>
+              </div>
+              <button onClick={() => setIsShared(!isShared)}
+                className="relative w-12 h-7 rounded-full transition-all"
+                style={{ background: isShared ? 'var(--accent-500)' : 'var(--bg-tertiary)' }}>
+                <div className="absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all"
+                  style={{ left: isShared ? '22px' : '2px' }} />
+              </button>
             </div>
-            <button onClick={() => setIsShared(!isShared)}
-              className="relative w-12 h-7 rounded-full transition-all"
-              style={{ background: isShared ? 'var(--accent-500)' : 'var(--bg-tertiary)' }}>
-              <div className="absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all"
-                style={{ left: isShared ? '22px' : '2px' }} />
-            </button>
-          </div>
+          )}
 
           {/* Preview */}
           <div className="p-4 rounded-2xl flex items-center gap-3"
@@ -504,25 +520,27 @@ export default function GroupsPage() {
       </Modal>
 
       {/* Join Group Modal */}
-      <Modal isOpen={showJoinGroup} onClose={() => setShowJoinGroup(false)} title="Join Group">
-        <div className="px-6 pb-6 space-y-4">
-          <input
-            type="text"
-            placeholder="Enter invite code (e.g. AB12CD)"
-            value={joinCode}
-            onChange={e => setJoinCode(e.target.value.toUpperCase())}
-            className="input font-mono text-center text-lg tracking-widest"
-            maxLength={6}
-            autoFocus
-          />
-          <p className="text-xs text-center" style={{ color: 'var(--text-tertiary)' }}>
-            Ask a group admin for the 6-character invite code
-          </p>
-          <button onClick={handleJoinGroup} className="btn-primary w-full" style={{ padding: '14px' }}>
-            Join Group
-          </button>
-        </div>
-      </Modal>
+      {COLLABORATION_ENABLED && (
+        <Modal isOpen={showJoinGroup} onClose={() => setShowJoinGroup(false)} title="Join Group">
+          <div className="px-6 pb-6 space-y-4">
+            <input
+              type="text"
+              placeholder="Enter invite code (e.g. AB12CD)"
+              value={joinCode}
+              onChange={e => setJoinCode(e.target.value.toUpperCase())}
+              className="input font-mono text-center text-lg tracking-widest"
+              maxLength={6}
+              autoFocus
+            />
+            <p className="text-xs text-center" style={{ color: 'var(--text-tertiary)' }}>
+              Ask a group admin for the 6-character invite code
+            </p>
+            <button onClick={handleJoinGroup} className="btn-primary w-full" style={{ padding: '14px' }}>
+              Join Group
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

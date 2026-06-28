@@ -23,6 +23,8 @@ export interface UserSettings {
   defaultView: 'list' | 'board' | 'calendar';
   weekStartsOn: 0 | 1;
   showCompletedTasks: boolean;
+  autoDeleteCompletedDays: number; // 0 = off; otherwise move completed tasks to trash after N days
+  autoEmptyTrashDays: number;      // 0 = off; otherwise permanently delete trashed tasks after N days
   defaultPriority: Priority;
   focusDuration: number;
   breakDuration: number;

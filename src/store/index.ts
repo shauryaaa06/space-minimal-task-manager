@@ -14,6 +14,8 @@ const defaultSettings: UserSettings = {
   defaultView: 'list',
   weekStartsOn: 0,
   showCompletedTasks: true,
+  autoDeleteCompletedDays: 0,
+  autoEmptyTrashDays: 0,
   defaultPriority: 'medium',
   focusDuration: 25,
   breakDuration: 5,
@@ -25,6 +27,8 @@ const defaultSettings: UserSettings = {
   dateFormat: 'MM/DD/YYYY',
   timeFormat: '12h',
 };
+
+export type AppTab = 'home' | 'calendar' | 'groups' | 'focus' | 'settings';
 
 interface AppStore {
   // Auth
@@ -43,6 +47,7 @@ interface AppStore {
   deletedTasks: Task[];
 
   // UI State
+  activeTab: AppTab;
   activeGroupId: string | null;
   selectedDate: string | null;
 
@@ -63,6 +68,7 @@ interface AppStore {
   restoreTask: (id: string) => void;
   permanentlyDeleteTask: (id: string) => void;
   completeTask: (id: string) => void;
+  runAutoCleanup: () => void;
   reorderTasks: (taskIds: string[]) => void;
   addSubtask: (taskId: string, title: string) => void;
   toggleSubtask: (taskId: string, subtaskId: string) => void;
@@ -93,6 +99,7 @@ interface AppStore {
   clearNotifications: () => void;
 
   // UI Actions
+  setActiveTab: (tab: AppTab) => void;
   setActiveGroupId: (id: string | null) => void;
   setSelectedDate: (date: string | null) => void;
 
@@ -133,6 +140,7 @@ export const useStore = create<AppStore>()(
       chatMessages: [],
       activityFeed: [],
       deletedTasks: [],
+      activeTab: 'home',
       activeGroupId: null,
       selectedDate: null,
 
@@ -298,6 +306,40 @@ export const useStore = create<AppStore>()(
         }));
       },
 
+      runAutoCleanup: () => {
+        const { user } = get();
+        const completedDays = user?.settings.autoDeleteCompletedDays ?? 0;
+        const trashDays = user?.settings.autoEmptyTrashDays ?? 0;
+        if (!completedDays && !trashDays) return;
+
+        const now = Date.now();
+        const dayMs = 24 * 60 * 60 * 1000;
+
+        set(state => {
+          let tasks = state.tasks;
+          let deletedTasks = state.deletedTasks;
+
+          // Move long-completed tasks into the trash
+          if (completedDays > 0) {
+            const cutoff = now - completedDays * dayMs;
+            const expired = tasks.filter(t => t.completed && t.completedAt && new Date(t.completedAt).getTime() < cutoff);
+            if (expired.length) {
+              const ids = new Set(expired.map(t => t.id));
+              tasks = tasks.filter(t => !ids.has(t.id));
+              deletedTasks = [...deletedTasks, ...expired.map(t => ({ ...t, deletedAt: new Date().toISOString() }))];
+            }
+          }
+
+          // Permanently empty old items from the trash
+          if (trashDays > 0) {
+            const cutoff = now - trashDays * dayMs;
+            deletedTasks = deletedTasks.filter(t => !(t.deletedAt && new Date(t.deletedAt).getTime() < cutoff));
+          }
+
+          return { tasks, deletedTasks };
+        });
+      },
+
       reorderTasks: (taskIds) => {
         set(state => ({
           tasks: state.tasks.map(t => ({ ...t, order: taskIds.indexOf(t.id) }))
@@ -461,6 +503,7 @@ export const useStore = create<AppStore>()(
 
       clearNotifications: () => set({ notifications: [] }),
 
+      setActiveTab: (tab) => set({ activeTab: tab }),
       setActiveGroupId: (id) => set({ activeGroupId: id }),
       setSelectedDate: (date) => set({ selectedDate: date }),
 

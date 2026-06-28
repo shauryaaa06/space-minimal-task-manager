@@ -6,11 +6,11 @@ import CalendarPage from './CalendarPage';
 import GroupsPage from './GroupsPage';
 import FocusPage from './FocusPage';
 import SettingsPage from './SettingsPage';
-
-type Tab = 'home' | 'calendar' | 'groups' | 'focus' | 'settings';
+import { useStore, type AppTab as Tab } from '../store';
 
 export default function MainApp() {
-  const [activeTab, setActiveTab] = useState<Tab>('home');
+  const activeTab = useStore(s => s.activeTab);
+  const setActiveTab = useStore(s => s.setActiveTab);
 
   const tabs = [
     { id: 'home' as Tab, label: 'Home', Icon: Home },

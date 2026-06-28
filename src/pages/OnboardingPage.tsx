@@ -172,7 +172,7 @@ export default function OnboardingPage() {
               <div className="space-y-3">
                 {[
                   { icon: '✅', text: 'Smart task management with priorities' },
-                  { icon: '👥', text: 'Collaborative groups for team projects' },
+                  { icon: '🗂️', text: 'Organize tasks into groups & projects' },
                   { icon: '📅', text: 'Beautiful calendar to plan your days' },
                   { icon: '🎯', text: 'Focus mode to maximize productivity' },
                 ].map((item, i) => (
@@ -252,7 +252,7 @@ export default function OnboardingPage() {
               <div className="space-y-3">
                 {([
                   { type: 'student' as UserType, emoji: '🎓', label: 'Student', desc: 'Classes, assignments & study groups' },
-                  { type: 'professional' as UserType, emoji: '💼', label: 'Professional', desc: 'Work projects & team collaboration' },
+                  { type: 'professional' as UserType, emoji: '💼', label: 'Professional', desc: 'Work projects & deadlines' },
                   { type: 'personal' as UserType, emoji: '🌿', label: 'Personal', desc: 'Life goals & personal projects' },
                 ]).map(option => (
                   <button
@@ -376,7 +376,7 @@ export default function OnboardingPage() {
                   </button>
                 </div>
 
-                {['Smart due date reminders', 'Group activity updates', 'Focus session alerts'].map((item, i) => (
+                {['Smart due date reminders', 'Daily task summaries', 'Focus session alerts'].map((item, i) => (
                   <div key={i} className="flex items-center gap-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
                     <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--accent-100)' }}>
                       <Check className="w-3 h-3" style={{ color: 'var(--accent-500)' }} />
